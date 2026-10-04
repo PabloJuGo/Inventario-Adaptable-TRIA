@@ -1,0 +1,9 @@
+/target/
+/data/*.db
+/data/*.db-*
+/data/documentos/*
+!/data/documentos/.gitkeep
+*.log
+.vscode/settings.json
+.idea/
+.DS_Store
