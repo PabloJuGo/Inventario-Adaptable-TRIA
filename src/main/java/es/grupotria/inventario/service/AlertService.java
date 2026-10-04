@@ -70,6 +70,8 @@ public class AlertService {
         LocalDate today = LocalDate.now();
         LocalDate max = today.plusDays(days);
         List<Lote> candidates = lotes.expiringBefore(max.toString());
+        // si un lote ya no está en la lista (sin stock o desactivado) su alerta se cierra
+        alertas.resolveExpiryExcept(candidates.stream().map(Lote::id).toList());
         for (Lote lote : candidates) {
             LocalDate expiry;
             try {

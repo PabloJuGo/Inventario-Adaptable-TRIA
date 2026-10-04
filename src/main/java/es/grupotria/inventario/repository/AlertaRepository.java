@@ -72,6 +72,14 @@ public class AlertaRepository {
         jdbc.update(sql.toString(), args.toArray());
     }
 
+    public void resolveExpiryExcept(List<Long> loteIds) {
+        String sql = "UPDATE alertas SET resuelta=1,leida=1 WHERE tipo='CADUCIDAD' AND resuelta=0";
+        if (!loteIds.isEmpty()) {
+            sql += " AND (lote_id IS NULL OR lote_id NOT IN (" + loteIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",")) + "))";
+        }
+        jdbc.update(sql);
+    }
+
     public int countOpen() {
         Integer v = jdbc.queryForObject("SELECT COUNT(*) FROM alertas WHERE resuelta=0", Integer.class);
         return v == null ? 0 : v;
