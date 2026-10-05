@@ -68,7 +68,9 @@ export function modal({ title, body, submitLabel = 'Guardar', cancelLabel = 'Can
     </section>`;
   root.appendChild(wrap);
 
-  const close = () => wrap.remove();
+  const onKey = e => { if (e.key === 'Escape') wrap.querySelector('.modal-cancel').click(); };
+  const close = () => { document.removeEventListener('keydown', onKey); wrap.remove(); };
+  document.addEventListener('keydown', onKey);
   wrap.querySelector('.modal-close').addEventListener('click', close);
   wrap.querySelector('.modal-cancel').addEventListener('click', close);
   wrap.addEventListener('mousedown', e => { if (e.target === wrap) close(); });
