@@ -83,7 +83,6 @@ public class MovimientoService {
         long id = movimientos.insert(r.tipo(), product.id(), r.loteId(), userId, qty,
                 r.motivo().trim(), r.referencia() == null ? "" : r.referencia().trim());
         alertas.refreshForProduct(product.id());
-        return movimientos.findAll(null, null, null, null, 1000).stream().filter(m -> m.id() == id).findFirst()
-                .orElseThrow();
+        return movimientos.findById(id).orElseThrow();
     }
 }

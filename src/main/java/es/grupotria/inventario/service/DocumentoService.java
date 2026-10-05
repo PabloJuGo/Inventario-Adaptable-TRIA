@@ -47,7 +47,7 @@ public class DocumentoService {
         if (productId == null && movementId == null) throw new ApiException(HttpStatus.BAD_REQUEST, "ASOCIACION_REQUERIDA", "Asocia el documento a un producto o movimiento.");
         if (productId != null && productos.findById(productId).isEmpty()) throw new ApiException(HttpStatus.BAD_REQUEST, "PRODUCTO_INVALIDO", "El producto asociado no existe.");
         if (movementId != null && movimientos.findById(movementId).isEmpty()) throw new ApiException(HttpStatus.BAD_REQUEST, "MOVIMIENTO_INVALIDO", "El movimiento asociado no existe.");
-        String original = file.getOriginalFilename() == null ? "archivo" : Paths.get(file.getOriginalFilename()).getFileName().toString();
+        String original = file.getOriginalFilename() == null ? "archivo" : Paths.get(file.getOriginalFilename()).getFileName().toString().replaceAll("\\p{Cntrl}", "");
         String ext = "";
         int dot = original.lastIndexOf('.');
         if (dot >= 0 && dot < original.length() - 1) ext = original.substring(dot).replaceAll("[^A-Za-z0-9.]", "");
@@ -57,9 +57,15 @@ public class DocumentoService {
         try { file.transferTo(target); }
         catch (IOException ex) { throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "ERROR_ARCHIVO", "No se pudo guardar el archivo."); }
         String display = nombre == null || nombre.isBlank() ? original : nombre.trim();
-        long id = documentos.insert(display, original, target.toString(),
-                file.getContentType() == null ? "application/octet-stream" : file.getContentType(),
-                file.getSize(), productId, movementId, userId);
+        long id;
+        try {
+            id = documentos.insert(display, original, target.toString(),
+                    file.getContentType() == null ? "application/octet-stream" : file.getContentType(),
+                    file.getSize(), productId, movementId, userId);
+        } catch (RuntimeException ex) {
+            try { Files.deleteIfExists(target); } catch (IOException ignored) {}
+            throw ex;
+        }
         return get(id);
     }
 
