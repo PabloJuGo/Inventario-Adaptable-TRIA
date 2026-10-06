@@ -13,9 +13,13 @@ export async function render(container, ctx) {
     </div>`;
   const table = container.querySelector('#stock-table');
 
+  let seq = 0;
   async function reload() {
+    const n = ++seq;
     const q = container.querySelector('#stock-search').value.trim();
-    items = await ctx.api.get('/stock' + (q ? `?q=${encodeURIComponent(q)}` : ''));
+    const res = await ctx.api.get('/stock' + (q ? `?q=${encodeURIComponent(q)}` : ''));
+    if (n !== seq) return;
+    items = res;
     draw();
   }
 

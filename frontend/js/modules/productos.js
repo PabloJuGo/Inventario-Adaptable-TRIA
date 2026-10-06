@@ -22,11 +22,15 @@ export async function render(container, ctx) {
 
   const table = container.querySelector('#products-table');
 
+  let seq = 0;
   async function reload() {
+    const n = ++seq;
     const q = container.querySelector('#q').value.trim();
     const estado = container.querySelector('#estado').value;
     const params = new URLSearchParams(); if (q) params.set('q', q); if (estado) params.set('estado', estado);
-    items = await ctx.api.get('/productos' + (params.size ? `?${params}` : ''));
+    const res = await ctx.api.get('/productos' + (params.size ? `?${params}` : ''));
+    if (n !== seq) return;
+    items = res;
     draw();
   }
 
