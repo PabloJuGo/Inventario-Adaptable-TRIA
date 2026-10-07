@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -39,6 +40,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
                 409, "CONFLICTO_DATOS", "La operación entra en conflicto con datos existentes.",
                 LocalDateTime.now(), Map.of()));
+    }
+
+    // El driver de SQLite no se traduce a DataIntegrityViolationException: el código 19 es SQLITE_CONSTRAINT.
+    @ExceptionHandler(UncategorizedSQLException.class)
+    public ResponseEntity<ErrorResponse> handleSqlite(UncategorizedSQLException ex) {
+        if (ex.getSQLException().getErrorCode() != 19) return handleUnexpected(ex);
+        log.warn("Conflicto de integridad: {}", ex.getSQLException().getMessage());
+        boolean unique = String.valueOf(ex.getSQLException().getMessage()).contains("UNIQUE");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
+                409, "CONFLICTO_DATOS", unique ? "Ya existe un registro con esos datos (SKU, código de barras, lote, email…)."
+                : "La operación entra en conflicto con datos existentes.", LocalDateTime.now(), Map.of()));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
