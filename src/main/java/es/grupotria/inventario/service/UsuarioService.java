@@ -45,6 +45,9 @@ public class UsuarioService {
         if (id == currentAdminId && !active) {
             throw new ApiException(HttpStatus.CONFLICT, "AUTO_DESACTIVACION", "No puedes desactivar tu propia cuenta mientras la estás utilizando.");
         }
+        if (id == currentAdminId && !"ADMIN".equals(r.rol())) {
+            throw new ApiException(HttpStatus.CONFLICT, "AUTO_DEGRADACION", "No puedes quitarte a ti mismo el rol de administrador.");
+        }
         usuarios.update(id, r.nombre().trim(), r.email().trim().toLowerCase(), r.rol(), active);
         if (r.password() != null && !r.password().isBlank()) usuarios.updatePassword(id, hasher.hash(r.password()));
         if (!active || !current.rol().equals(r.rol())) auth.invalidateUser(id);
