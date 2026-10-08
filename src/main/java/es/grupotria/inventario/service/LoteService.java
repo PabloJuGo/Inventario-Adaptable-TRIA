@@ -33,6 +33,9 @@ public class LoteService {
     public Lote create(LoteRequest r, long userId) {
         Producto p = productos.findById(r.productoId()).orElseThrow(() ->
                 new ApiException(HttpStatus.NOT_FOUND, "PRODUCTO_NO_ENCONTRADO", "El producto no existe."));
+        if (!"ACTIVO".equals(p.estado())) {
+            throw new ApiException(HttpStatus.CONFLICT, "PRODUCTO_INACTIVO", "No se pueden crear lotes sobre un producto inactivo.");
+        }
         parseDate(r.fechaEntrada(), "fecha de entrada");
         if (r.fechaCaducidad() != null && !r.fechaCaducidad().isBlank()) {
             LocalDate exp = parseDate(r.fechaCaducidad(), "fecha de caducidad");
