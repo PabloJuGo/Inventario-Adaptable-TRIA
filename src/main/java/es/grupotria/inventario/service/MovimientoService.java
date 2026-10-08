@@ -51,6 +51,9 @@ public class MovimientoService {
             if (!lot.productoId().equals(product.id())) {
                 throw new ApiException(HttpStatus.BAD_REQUEST, "LOTE_INCOMPATIBLE", "El lote no pertenece al producto seleccionado.");
             }
+            if (!"ACTIVO".equals(lot.estado())) {
+                throw new ApiException(HttpStatus.CONFLICT, "LOTE_INACTIVO", "No se pueden registrar movimientos sobre un lote inactivo.");
+            }
         }
 
         if (r.loteId() == null && lotes.hasAnyForProduct(product.id())) {
