@@ -34,8 +34,13 @@ public class ConfiguracionService {
     public Configuracion update(String key, ConfigUpdateRequest request) {
         Configuracion c = repo.findByKey(key).orElseThrow(() ->
                 new ApiException(HttpStatus.NOT_FOUND, "CONFIG_NO_ENCONTRADA", "La opción de configuración no existe."));
+        String valor = request.valor().trim();
+        if (c.valor().matches("true|false") && !valor.matches("true|false"))
+            throw new ApiException(HttpStatus.BAD_REQUEST, "CONFIG_VALOR_INVALIDO", "Esta opción solo admite true o false.");
+        if (c.valor().matches("[0-9]+") && !valor.matches("[0-9]{1,6}"))
+            throw new ApiException(HttpStatus.BAD_REQUEST, "CONFIG_VALOR_INVALIDO", "Esta opción requiere un número entero positivo.");
         boolean active = request.activo() == null ? c.activo() : request.activo();
-        repo.update(key, request.valor(), active);
+        repo.update(key, valor, active);
         return repo.findByKey(key).orElseThrow();
     }
 }
