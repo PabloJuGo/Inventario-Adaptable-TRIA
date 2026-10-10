@@ -2,6 +2,7 @@ package es.grupotria.inventario.service;
 
 import es.grupotria.inventario.exception.ApiException;
 import es.grupotria.inventario.model.DocumentoInventario;
+import es.grupotria.inventario.repository.ConfiguracionRepository;
 import es.grupotria.inventario.repository.DocumentoRepository;
 import es.grupotria.inventario.repository.MovimientoRepository;
 import es.grupotria.inventario.repository.ProductoRepository;
@@ -25,11 +26,12 @@ public class DocumentoService {
     private final DocumentoRepository documentos;
     private final ProductoRepository productos;
     private final MovimientoRepository movimientos;
+    private final ConfiguracionRepository config;
     private final Path root;
 
     public DocumentoService(DocumentoRepository documentos, ProductoRepository productos, MovimientoRepository movimientos,
-                            @Value("${app.documents-path:./data/documentos}") String path) {
-        this.documentos = documentos; this.productos = productos; this.movimientos = movimientos;
+                            ConfiguracionRepository config, @Value("${app.documents-path:./data/documentos}") String path) {
+        this.documentos = documentos; this.productos = productos; this.movimientos = movimientos; this.config = config;
         this.root = Paths.get(path).toAbsolutePath().normalize();
         try { Files.createDirectories(this.root); }
         catch (IOException ex) { throw new IllegalStateException("No se pudo crear la carpeta de documentos", ex); }
@@ -43,6 +45,9 @@ public class DocumentoService {
 
     @Transactional
     public DocumentoInventario upload(String nombre, Long productId, Long movementId, MultipartFile file, long userId) {
+        if (!config.findByKey("modulo_documentos").map(c -> c.activo() && Boolean.parseBoolean(c.valor())).orElse(true)) {
+            throw new ApiException(HttpStatus.CONFLICT, "MODULO_DESACTIVADO", "El módulo de documentos está desactivado.");
+        }
         if (file == null || file.isEmpty()) throw new ApiException(HttpStatus.BAD_REQUEST, "ARCHIVO_REQUERIDO", "Selecciona un archivo.");
         if (productId == null && movementId == null) throw new ApiException(HttpStatus.BAD_REQUEST, "ASOCIACION_REQUERIDA", "Asocia el documento a un producto o movimiento.");
         if (productId != null && productos.findById(productId).isEmpty()) throw new ApiException(HttpStatus.BAD_REQUEST, "PRODUCTO_INVALIDO", "El producto asociado no existe.");

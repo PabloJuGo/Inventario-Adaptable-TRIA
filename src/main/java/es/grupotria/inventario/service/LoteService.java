@@ -4,6 +4,7 @@ import es.grupotria.inventario.dto.LoteRequest;
 import es.grupotria.inventario.exception.ApiException;
 import es.grupotria.inventario.model.Lote;
 import es.grupotria.inventario.model.Producto;
+import es.grupotria.inventario.repository.ConfiguracionRepository;
 import es.grupotria.inventario.repository.LoteRepository;
 import es.grupotria.inventario.repository.MovimientoRepository;
 import es.grupotria.inventario.repository.ProductoRepository;
@@ -20,9 +21,12 @@ public class LoteService {
     private final ProductoRepository productos;
     private final MovimientoRepository movimientos;
     private final AlertService alertas;
+    private final ConfiguracionRepository config;
 
-    public LoteService(LoteRepository lotes, ProductoRepository productos, MovimientoRepository movimientos, AlertService alertas) {
+    public LoteService(LoteRepository lotes, ProductoRepository productos, MovimientoRepository movimientos, AlertService alertas,
+                       ConfiguracionRepository config) {
         this.lotes = lotes; this.productos = productos; this.movimientos = movimientos; this.alertas = alertas;
+        this.config = config;
     }
 
     public List<Lote> list(Long productoId, String estado, boolean onlyWithStock) {
@@ -31,6 +35,9 @@ public class LoteService {
 
     @Transactional
     public Lote create(LoteRequest r, long userId) {
+        if (!config.findByKey("modulo_lotes").map(c -> c.activo() && Boolean.parseBoolean(c.valor())).orElse(true)) {
+            throw new ApiException(HttpStatus.CONFLICT, "MODULO_DESACTIVADO", "El módulo de lotes está desactivado.");
+        }
         Producto p = productos.findById(r.productoId()).orElseThrow(() ->
                 new ApiException(HttpStatus.NOT_FOUND, "PRODUCTO_NO_ENCONTRADO", "El producto no existe."));
         if (!"ACTIVO".equals(p.estado())) {
